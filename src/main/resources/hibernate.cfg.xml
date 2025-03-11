@@ -11,7 +11,7 @@
 <hibernate-configuration>
     <session-factory>
 
-        <property name="connection.url">jdbc:postgresql://localhost:5678/swift_codes</property> <!-- BD Mane -->
+        <property name="connection.url">jdbc:postgresql://localhost:7777/swift_codes</property> <!-- BD Mane -->
         <property name="connection.driver_class">org.postgresql.Driver</property> <!-- DB Driver -->
         <property name="connection.username">admin</property> <!-- DB User -->
         <property name="connection.password">admin</property> <!-- DB Password -->
@@ -22,7 +22,9 @@
         <property name="show_sql">true</property> <!-- Show SQL in console -->
         <property name="format_sql">true</property> <!-- Show SQL formatted -->
 
-        <mapping class="org.swiftcodes.Country"/>
+        <mapping class="org.swiftcodes.database.Country"/>
+        <mapping class="org.swiftcodes.database.Bank"/>
+        <mapping class="org.swiftcodes.database.SwiftCode"/>
 
     </session-factory>
 </hibernate-configuration>

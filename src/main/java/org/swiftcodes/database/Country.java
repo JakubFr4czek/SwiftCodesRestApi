@@ -1,18 +1,19 @@
-package org.swiftcodes;
+package org.swiftcodes.database;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name="Countries")
+@Table(name="countries")
 public class Country {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="Country_id")
     private int countryId;
 
-    @Column(name="iso2")
+    @Column(name="iso2", unique = true)
     private String iso2;
 
-    @Column(name="name")
+    @Column(name="name", unique = true)
     private String name;
 
     @Column(name="timezone")
