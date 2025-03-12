@@ -22,9 +22,9 @@
         <property name="show_sql">true</property> <!-- Show SQL in console -->
         <property name="format_sql">true</property> <!-- Show SQL formatted -->
 
-        <mapping class="org.swiftcodes.database.Country"/>
-        <mapping class="org.swiftcodes.database.Bank"/>
-        <mapping class="org.swiftcodes.database.SwiftCode"/>
+        <mapping class="org.swiftcodes.database.objects.Country"/>
+        <mapping class="org.swiftcodes.database.objects.Bank"/>
+        <mapping class="org.swiftcodes.database.objects.SwiftCode"/>
 
     </session-factory>
 </hibernate-configuration>

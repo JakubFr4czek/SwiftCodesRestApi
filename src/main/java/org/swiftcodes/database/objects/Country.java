@@ -1,5 +1,9 @@
-package org.swiftcodes.database;
+package org.swiftcodes.database.objects;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.*;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Entity
 @Table(name="countries")
@@ -16,17 +20,24 @@ public class Country {
     @Column(name="name", unique = true)
     private String name;
 
-    @Column(name="timezone")
-    private String timezone;
-
     public Country(){
-
+        this.iso2 = "";
+        this.name = "";
     }
 
-    public Country(String iso2, String name, String timezone){
+    public Country(String iso2, String name){
         this.iso2 = iso2;
         this.name = name;
-        this.timezone = timezone;
+    }
+
+    public Map<String, Object> toHashMap() throws JsonProcessingException {
+
+        Map<String, Object> countryHashMap = new LinkedHashMap<>();
+
+        countryHashMap.put("countryISO2", iso2);
+        countryHashMap.put("countryName", name);
+
+        return countryHashMap;
     }
 
     public int getCountryId() {return this.countryId;}

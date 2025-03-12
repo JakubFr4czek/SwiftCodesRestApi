@@ -1,4 +1,4 @@
-package org.swiftcodes.database;
+package org.swiftcodes.database.objects;
 
 import jakarta.persistence.*;
 
@@ -14,17 +14,13 @@ public class SwiftCode {
     @Column(name="swift_code", unique = true)
     private String swiftCode;
 
-    @Column(name="code_type")
-    private String codeType;
-
     @Column(name="bank_id")
     private int bankId;
 
     public SwiftCode() {}
 
-    public SwiftCode(String swiftCode, String codeType, int bankId) {
+    public SwiftCode(String swiftCode, int bankId) {
         this.swiftCode = swiftCode;
-        this.codeType = codeType;
         this.bankId = bankId;
     }
 
@@ -35,10 +31,6 @@ public class SwiftCode {
     public String getSwiftCode() { return swiftCode; }
 
     public void setSwiftCode(String swiftCode) { this.swiftCode = swiftCode; }
-
-    public String getCodeType() { return codeType; }
-
-    public void setCodeType(String codeType) { this.codeType = codeType; }
 
     public int getBankId() { return bankId; }
 

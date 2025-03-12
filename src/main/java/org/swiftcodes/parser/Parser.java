@@ -8,9 +8,11 @@ import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.swiftcodes.database.Bank;
-import org.swiftcodes.database.Country;
-import org.swiftcodes.database.SwiftCode;
+import org.swiftcodes.Exceptions.SwiftCodesTableException;
+import org.swiftcodes.database.management.DatabaseManager;
+import org.swiftcodes.database.objects.Bank;
+import org.swiftcodes.database.objects.Country;
+import org.swiftcodes.database.objects.SwiftCode;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -38,68 +40,40 @@ public class Parser {
     }
 
 
-    static void saveToDatabase(List<String[]> allData, EntityManagerFactory entityManagerFactory) {
+    static void saveToDatabase(List<String[]> allData) {
 
         for(String[] row : allData){
 
-            String iso2 = row[0];
-            String swiftCode = row[1];
-            String codeType = row[2];
+            String iso2 = row[0].toUpperCase();
+            String swiftCodeString = row[1];
             String bankName = row[3];
             String bankAddress = row[4];
-            String townName = row[5];
             String countryName = row[6];
-            String timezone = row[7];
-            boolean is_branch = false;
+            boolean isHeadquarter = true;
 
-            if(swiftCode.substring(swiftCode.length()-4,swiftCode.length()-1).equals("XXX"))
-                is_branch = true;
+            if(swiftCodeString.endsWith("XXX"))
+                isHeadquarter = false;
 
+            DatabaseManager databaseManager = new DatabaseManager();
 
-            try(EntityManager entityManager = entityManagerFactory.createEntityManager()){
-                entityManager.getTransaction().begin();
+            if(!databaseManager.checkIfSwiftCodeAlreadyExists(swiftCodeString)){
 
-                List<SwiftCode> swiftCodeList = entityManager.createQuery("select s from SwiftCode s WHERE s.swiftCode = :swiftCode",SwiftCode.class)
-                        .setParameter("swiftCode",swiftCode)
-                        .getResultList();
+                Country country = new Country(iso2, countryName);
 
-                List<Country> countryList = entityManager.createQuery("select c from Country c WHERE c.iso2 = :iso2",Country.class)
-                        .setParameter("iso2",iso2)
-                        .getResultList();
+                country = databaseManager.saveCountry(country);
 
-                if (countryList.size()>1) {
-                    throw new RuntimeException("Error while inserting country into database");
-                }
+                Bank bank = new Bank(isHeadquarter, bankName, bankAddress, country.getCountryId());
 
-                if(!swiftCodeList.isEmpty()) {
-                    throw new RuntimeException("Swift code already exists in database");
-                }
+                bank = databaseManager.saveBank(bank);
 
-                int country_id;
+                SwiftCode swiftCode = new SwiftCode(swiftCodeString, bank.getBankId());
 
-                if(countryList.isEmpty()) {
-                    Country country = new Country(iso2, countryName, timezone);
-                    entityManager.persist(country);
-                    country_id = country.getCountryId();
-                }else{ //Country already exists in database
-                    country_id = countryList.get(0).getCountryId();
-                }
+                swiftCode = databaseManager.saveSwiftCode(swiftCode);
 
-                Bank bank = new Bank(is_branch, bankName, bankAddress, townName, country_id);
-                entityManager.persist(bank);
-
-                if(swiftCodeList.isEmpty()) {
-                    SwiftCode sc = new SwiftCode(swiftCode, codeType, bank.getBankId());
-                    entityManager.persist(sc);
-                }
+                if(swiftCode != null) throw new SwiftCodesTableException("Error while inserting SwiftCode");
 
 
-                entityManager.getTransaction().commit();
-
-            }catch (Exception e){
-                e.printStackTrace();
             }
-
 
         }
 
@@ -109,15 +83,8 @@ public class Parser {
 
     public static void main(String[] args){
 
-        final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure().build();
-
-        try(EntityManagerFactory entityManagerFactory = new MetadataSources( registry ).buildMetadata().buildSessionFactory();) {
-            List<String[]> allData = readData("src/main/resources/Interns_2025_SWIFT_CODES.csv");
-            saveToDatabase(allData, entityManagerFactory);
-        }
-        catch (Exception e) {
-            StandardServiceRegistryBuilder.destroy( registry );
-        }
+        List<String[]> allData = readData("src/main/resources/Interns_2025_SWIFT_CODES.csv");
+        saveToDatabase(allData);
 
     }
 
