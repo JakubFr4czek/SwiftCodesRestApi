@@ -131,12 +131,12 @@ This project implements an application that parses SWIFT codes, stores them in a
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repository-name.git
+   git clone https://github.com/JakubFr4czek/SwiftCodesRestApi
    ```
 
 2. Navigate to the project directory:
    ```bash
-   cd swift-code-api
+   cd SwiftCodesRestApi
    ```
 
 3. Build the project:
@@ -156,13 +156,6 @@ This project implements an application that parses SWIFT codes, stores them in a
 To run tests, you can use the following command:
 ```bash
 ./mvnw test
-```
-
-### Docker
-
-This project is containerized using Docker. To run the application and database in containers, use:
-```bash
-docker-compose up --build
 ```
 
 The application will be available at `http://localhost:8080`.
