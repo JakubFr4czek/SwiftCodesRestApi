@@ -1,0 +1,29 @@
+services:
+  springboot-app:
+    image: postgres:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/swift_codes
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
+    depends_on:
+      - database
+
+  database:
+    image: swift_codes_postgres:latest
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: swift_codes
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./aed9f2dab4a36338a20a663a01e3bd7fe26540d5a0c1f19703648ffa2b5fa73e:/var/lib/postgresql/data
+
+volumes:
+   aed9f2dab4a36338a20a663a01e3bd7fe26540d5a0c1f19703648ffa2b5fa73e:
+    external: true

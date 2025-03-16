@@ -7,9 +7,12 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 
+
+@EntityScan(basePackages = "org.swiftcodes.database.objects")
+@ComponentScan(basePackages = "org.swiftcodes.database.management")
+@ComponentScan(basePackages = "org.swiftcodes.restapi")
+@EnableJpaRepositories(basePackages = "org.swiftcodes.database.repositories")
 @SpringBootApplication
-@EntityScan(basePackages = "org.swiftcodes.database")
-@EnableJpaRepositories(basePackages = "org.swiftcodes.database.repositories")  // Update with your correct package
 public class SwiftCodeRestApi {
     public static void main(String[] args) {
         SpringApplication.run(SwiftCodeRestApi.class, args);

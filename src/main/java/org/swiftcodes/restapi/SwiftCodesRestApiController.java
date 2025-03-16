@@ -3,11 +3,10 @@ package org.swiftcodes.restapi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.swiftcodes.DTO.SwiftCodeDTO;
-import org.swiftcodes.Exceptions.BankTableException;
-import org.swiftcodes.Exceptions.CountryTableException;
-import org.swiftcodes.Exceptions.SwiftCodesTableException;
+import org.swiftcodes.dto.SwiftCodeDTO;
 import org.swiftcodes.database.management.DatabaseManager;
 import org.swiftcodes.database.objects.Bank;
 import org.swiftcodes.database.objects.Country;
@@ -31,10 +30,13 @@ public class SwiftCodesRestApiController {
     @Autowired
     private SwiftCodeRepository swiftCodeRepository;
 
+    @Autowired
+    private DatabaseManager databaseManager;
+
     @RequestMapping("/v1/swift-codes/{swift-code}")
-    public String getHeadquatersBySwiftCode(@PathVariable("swift-code") String swiftCodeString) throws JsonProcessingException {
+    public ResponseEntity<String> getHeadquatersBySwiftCode(@PathVariable("swift-code") String swiftCodeString) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        List<String> branchesString = new ArrayList<>();
+        List<Map<String, Object>> branchesMaps = new ArrayList<>();
 
         SwiftCodeDTO swiftCodeDTO = new SwiftCodeDTO();
 
@@ -54,8 +56,12 @@ public class SwiftCodesRestApiController {
 
                     List<SwiftCodeDTO> branches = getBranchBySwiftCode(swiftCodeList.get(0).getSwiftCode());
 
+                    if(branches == null){
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\": \"Error while getting branches\"}");
+                    }
+
                     for (SwiftCodeDTO branch : branches) {
-                        branchesString.add(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(branch.toHashMap()));
+                        branchesMaps.add(branch.toHashMap());
                     }
 
                 }
@@ -67,21 +73,22 @@ public class SwiftCodesRestApiController {
                     swiftCodeDTO.fillCountryData(countryList.get(0).getIso2().toUpperCase(), countryList.get(0).getName());
 
                 }else if(countryList.size() > 1) {
-                    throw new CountryTableException("More than one country found for countryId: " + countryList.get(0).getCountryId());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\": \"More than one country found for countryId!\"}");
                 }
 
             }else if(bankList.size() > 1) {
-                throw new BankTableException("More than one bank found for bankId " + swiftCodeList.get(0).getBankId());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\": \"More than one bank found for bankId!\"}");
             }
 
         }else if(swiftCodeList.size() > 1) {
-            throw new SwiftCodesTableException("More than one swift code found for Swift code " + swiftCodeString);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\": \"More than one swiftCode object found for swiftCode!\"}");
+
         }
 
         Map<String, Object> response = swiftCodeDTO.toHashMap();
-        response.put("branches", branchesString);
+        response.put("branches", branchesMaps);
 
-        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+        return ResponseEntity.status(HttpStatus.OK).body(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response));
 
     }
 
@@ -114,15 +121,15 @@ public class SwiftCodesRestApiController {
                         swiftCodeDTO.fillCountryData(countryList.get(0).getIso2().toUpperCase(), countryList.get(0).getName());
 
                     }else if(countryList.size() > 1) {
-                        throw new CountryTableException("More than one country found for countryId: " + bankList.get(0).getCountryId());
+                        return null;
                     }
 
                 }else if(bankList.size() > 1){
-                    throw new BankTableException("More than one bank found for bankId " + swiftCodeList.get(0).getBankId());
+                    return null;
                 }
 
             }else if(swiftCodeList.size() > 1) {
-                throw new SwiftCodesTableException("More than one swift code found for Swift code " + swiftCodeString);
+                return null;
             }
 
             response.add(swiftCodeDTO);
@@ -134,9 +141,9 @@ public class SwiftCodesRestApiController {
     }
 
     @RequestMapping("/v1/swift-codes/country/{countryISO2code}")
-    public String getCoutryByISO2(@PathVariable("countryISO2code") String countryISO2code) throws JsonProcessingException {
+    public ResponseEntity<String> getCoutryByISO2(@PathVariable("countryISO2code") String countryISO2code) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        List<String> swiftcodesString = new ArrayList<>();
+        List<Map<String, Object>> swiftCodesList = new ArrayList<>();
 
         List<Country> countryList = countryRepository.findCountryByISO2(countryISO2code.toUpperCase());
         Country country;
@@ -148,25 +155,24 @@ public class SwiftCodesRestApiController {
             List<SwiftCodeDTO> swiftcodes = swiftCodeRepository.findSwiftCodesByISO2(country.getIso2().toUpperCase());
 
             for (SwiftCodeDTO swiftcode : swiftcodes) {
-                swiftcodesString.add(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(swiftcode.toHashMap()));
+                swiftCodesList.add(swiftcode.toHashMap());
             }
 
         }else if(countryList.size() > 1){
-            throw new CountryTableException("More than one country found for ISO2 code " + countryISO2code.toUpperCase());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\": \"More than one country found for ISO2 code!\"}");
+
         }else{
             country = new Country();
         }
 
         Map<String, Object> response = country.toHashMap();
-        response.put("swiftCodes", swiftcodesString);
+        response.put("swiftCodes", swiftCodesList);
 
-        return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(response);
+        return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(response));
     }
 
     @PostMapping("/v1/swift-codes")
-    public String newSwiftCode(@RequestBody SwiftCodeDTO swiftCodeDTO) {
-
-        DatabaseManager databaseManager = new DatabaseManager();
+    public ResponseEntity<String> newSwiftCode(@RequestBody SwiftCodeDTO swiftCodeDTO) {
 
         if(!databaseManager.checkIfSwiftCodeAlreadyExists(swiftCodeDTO.getSwiftCode())){
 
@@ -183,31 +189,31 @@ public class SwiftCodesRestApiController {
             swiftCode = databaseManager.saveSwiftCode(swiftCode);
 
             if(swiftCode != null)
-                return "{\"message\": \"Swift code successfully added!\"}";
+                return ResponseEntity.status(HttpStatus.CREATED).body("{\"message\": \"Swift code successfully added!\"}");
             else
-                return "{\"message\": \"Error while adding Swift code!\"}";
-
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\": \"Error while adding Swift code!\"}");
         }else{
-            return "{\"message\": \"Swift code already exists!\"}";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Swift code already exists!\"}");
         }
 
     }
 
     @DeleteMapping("/v1/swift-codes/{swift-code}")
-    public String deleteSwiftCode(@PathVariable("swift-code") String swiftCodeString) {
+    public ResponseEntity<String> deleteSwiftCode(@PathVariable("swift-code") String swiftCodeString) {
 
         List<SwiftCode> swiftCodeList = swiftCodeRepository.findBySwiftCode(swiftCodeString);
 
         if (swiftCodeList.isEmpty()) {
-            return "{\"message\": \"Swift code not found!\"}";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"Swift code not found!\"}");
         }else if(swiftCodeList.size() == 1){
             swiftCodeRepository.delete(swiftCodeList.get(0));
-            return "{\"message\": \"Swift code successfully deleted!\"}";
+            return ResponseEntity.status(HttpStatus.OK).body("{\"message\": \"Swift code successfully deleted!\"}");
         }else{
-            throw new SwiftCodesTableException("More than one swift code found for Swift code " + swiftCodeString);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\": \"More than one swift code object found for given swift code!\"}");
         }
 
     }
+
 
 
 }

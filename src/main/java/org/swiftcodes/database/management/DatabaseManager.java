@@ -7,6 +7,7 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.swiftcodes.database.objects.Bank;
 import org.swiftcodes.database.objects.Country;
 import org.swiftcodes.database.objects.SwiftCode;
@@ -15,7 +16,7 @@ import org.swiftcodes.database.repositories.SwiftCodeRepository;
 
 import java.util.List;
 
-@Component
+@Service
 public class DatabaseManager {
 
     @Autowired
@@ -97,25 +98,11 @@ public class DatabaseManager {
 
     public boolean checkIfSwiftCodeAlreadyExists(String swiftCodeString){
 
-        final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure().build();
+        List<SwiftCode> swiftCodeList = swiftCodeRepository.findBySwiftCode(swiftCodeString);
 
-        try (EntityManagerFactory entityManagerFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory()) {
-
-            try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
-
-                List<SwiftCode> swiftCodeList = swiftCodeRepository.findBySwiftCode(swiftCodeString);
-
-                if(!swiftCodeList.isEmpty())
-                    return true;
-
-            } catch (Exception e) {
-                StandardServiceRegistryBuilder.destroy(registry);
-            }
-
-        }
-
-        return false;
+        return !swiftCodeList.isEmpty();
     }
+
 
 
 }
